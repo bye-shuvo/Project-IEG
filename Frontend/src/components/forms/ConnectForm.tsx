@@ -4,20 +4,21 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { FaWhatsapp } from 'react-icons/fa'
 import { LuCircleCheck, LuCircleAlert, LuLoader } from 'react-icons/lu'
 import { inquirySchema, type InquiryFormValues } from '@/schemas/connect.schema'
-import { submitInquiry } from '@/lib/api'
+import { submitInquiry, ApiValidationError } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 
 export const ConnectForm: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState<string>('')
+  const [statusMessage, setStatusMessage] = useState<string>('')
 
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<InquiryFormValues>({
     resolver: zodResolver(inquirySchema),
@@ -44,11 +45,12 @@ export const ConnectForm: React.FC = () => {
 
   const onSubmit = async (data: InquiryFormValues) => {
     setSubmitStatus('idle')
-    setErrorMessage('')
+    setStatusMessage('')
 
     try {
-      await submitInquiry(data)
+      const response = await submitInquiry(data)
       setSubmitStatus('success')
+      setStatusMessage(response.message)
       reset({
         name: '',
         email: '',
@@ -58,10 +60,20 @@ export const ConnectForm: React.FC = () => {
       })
     } catch (err: unknown) {
       setSubmitStatus('error')
-      if (err instanceof Error) {
-        setErrorMessage(err.message)
+      if (err instanceof ApiValidationError) {
+        if (err.errors) {
+          for (const [field, message] of Object.entries(err.errors)) {
+            if (field in data) {
+              setError(field as keyof InquiryFormValues, {
+                type: 'server',
+                message,
+              })
+            }
+          }
+        }
+        setStatusMessage(err.message || 'Validation failed')
       } else {
-        setErrorMessage('Failed to send inquiry. Please try again.')
+        setStatusMessage('Something went wrong. Please try again later.')
       }
     }
   }
@@ -82,10 +94,7 @@ export const ConnectForm: React.FC = () => {
         >
           <LuCircleCheck className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Message prepared successfully!</p>
-            <p className="text-xs mt-0.5 text-green-700">
-              Thank you for reaching out. We will connect with you shortly.
-            </p>
+            <p className="font-semibold">{statusMessage}</p>
           </div>
         </div>
       )}
@@ -97,8 +106,7 @@ export const ConnectForm: React.FC = () => {
         >
           <LuCircleAlert className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Submission failed</p>
-            <p className="text-xs mt-0.5 text-red-700">{errorMessage}</p>
+            <p className="font-semibold">{statusMessage}</p>
           </div>
         </div>
       )}
