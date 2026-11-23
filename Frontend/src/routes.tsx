@@ -4,6 +4,7 @@ import { Layout } from '@/components/layout/Layout'
 
 const LandingPage = lazy(() => import('@/pages/LandingPage'))
 const ConnectPage = lazy(() => import('@/pages/ConnectPage'))
+const AdminPage = lazy(() => import('@/pages/AdminPage'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
 const fallbackLoader = (
@@ -13,6 +14,14 @@ const fallbackLoader = (
 )
 
 const router = createBrowserRouter([
+  {
+    path: '/admin',
+    element: (
+      <Suspense fallback={fallbackLoader}>
+        <AdminPage />
+      </Suspense>
+    ),
+  },
   {
     path: '/',
     element: <Layout />,
