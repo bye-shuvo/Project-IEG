@@ -2,8 +2,10 @@
   "name": "ieg.backend",
   "version": "1.0.0",
   "description": "Backend server for website IEG.",
-  "main": "index.js",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
+    "start": "nodemon ./src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "shuvo",
@@ -12,6 +14,8 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.10",
     "express": "^5.3.0",
-    "mongoose": "^9.12.3"
+    "mongoose": "^9.12.3",
+    "nodemon": "^3.1.14",
+    "zod": "^4.6.7"
   }
 }

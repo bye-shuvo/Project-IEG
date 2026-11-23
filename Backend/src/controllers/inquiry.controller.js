@@ -44,3 +44,43 @@ export const createInquiry = async (req, res) => {
       .json({ success: false, message: 'Something went wrong. Please try again later.' });
   }
 };
+
+export const getInquiries = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+    const search = String(req.query.search || '').trim();
+
+    const filter = {};
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [
+        { name: regex },
+        { email: regex },
+        { organization: regex },
+        { interestedIn: regex },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      Inquiry.find(filter)
+        .select('-__v')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Inquiry.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data,
+      pagination: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1) },
+    });
+  } catch (error) {
+    console.error('getInquiries error:', error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Something went wrong. Please try again later.' });
+  }
+};
