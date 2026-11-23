@@ -16,7 +16,6 @@ dist-ssr
 .env
 .env.*
 DESIGN.md
-assets
 
 # Editor directories and files
 .vscode/*
